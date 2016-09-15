@@ -64,7 +64,14 @@ class Algolia_Algoliasearch_Model_Indexer_Algoliacategories extends Algolia_Algo
 
                 /** @var Mage_Catalog_Model_Category $category*/
                 $category = $event->getDataObject();
-                $productIds = $category->getAffectedProductIds();
+
+                $productIds = array();
+                if ($this->config->indexAllCategoryProductsOnCategoryUpdate()) {
+                    $productIds = $category->getProductCollection()->getAllIds();
+                }
+                elseif ($this->config->indexProductOnCategoryProductsUpdate()) {
+                    $productIds = $category->getAffectedProductIds();
+                }
 
                 if (!$category->getData('is_active')) {
                     $event->addNewData('catalogsearch_delete_category_id',
@@ -150,7 +157,7 @@ class Algolia_Algoliasearch_Model_Indexer_Algoliacategories extends Algolia_Algo
          * If we have added any new products to a category then we need to
          * update these products in Algolia indices.
          */
-        if ($this->config->indexProductOnCategoryProductsUpdate() && !empty($data['catalogsearch_update_product_id'])) {
+        if (!empty($data['catalogsearch_update_product_id'])) {
             $this->reindexSpecificProducts($data['catalogsearch_update_product_id']);
         }
     }
